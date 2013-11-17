@@ -11,7 +11,7 @@ if (!inputFile) {
 }
 
 var parse = function (scannedInput) {
-	
+	var outputParser = '';	
 	var sym;
 	var peek;
 	var ast = {};
@@ -21,29 +21,31 @@ var parse = function (scannedInput) {
 		return function () {
 			console.log(i);
 			if (i >= scannedInput.length) {
+				peek = false;
 				return false;
 			}
-			sym = scannedInput[i++];
-			peek = scannedInput[i];
+			peek = scannedInput[i++];
 			return true;
 		};
 	})();
 	
 	var killWhite = function () {
-		while (sym.BLANK) {
-			getSym();
+		while (peek.BLANK) {
+			nextSym();
 		}
 	};
 
-	var getSym = function () {
+	var getSym = function () { // push the look ahead cursor up one character
+		sym = peek; // undefined the first call
 		nextSym();
 		killWhite();
 	};
-
 	
-	var createAST = function () {
+	var createParser = function () {
+		getSym();
+		getSym(); // call getSym twice to initalize the sym pointer to something other than undefined
 		syntax();
-		process.stdout.write(JSON.stringify(ast));
+		process.stdout.write(JSON.stringify(outputParser));
 	};
 
 
@@ -70,6 +72,7 @@ var parse = function (scannedInput) {
 		getSym();
 		if (!sym.DOT) {
 			console.log(sym);
+			console.log(peek);
 			throw new Error(" Parse: expected DOT");
 		}
 		return true;
@@ -135,7 +138,7 @@ var parse = function (scannedInput) {
 		}
 		return true;
 	};
-	createAST();
+	createParser();
 };
 
 exec("./ebnfScanner.js " + inputFile, function(error, stdout, stderr) {
