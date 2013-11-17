@@ -39,37 +39,37 @@ var getSymbol = function () {
 		start += symbol.BLANK.length;
 	}
 	// is it an identifer?
-	else if (intermediateString.match(/^[^"\s]+/)) {
-		symbol.IDENT = intermediateString.match(/^[^"\s]+/)[0];
+	else if (intermediateString.match(/^[^"\s=\[\]\(\)\.\{\}]+/)) {
+		symbol.IDENT = intermediateString.match(/^[^"\s=\[\]\(\)\.\{\}]+/)[0];
 		start += symbol.IDENT.length;
 	}
 	// is it a string
 	else if (intermediateString.match(/^"[^"]*"/)) {
 		symbol.STRING = intermediateString.match(/^"[^"]*"/)[0];
-		start += symbol.STRING.length +2;
+		start += symbol.STRING.length;
 	}
 	else if (intermediateString.match(/^\(/)) {
-		symbol.RPAREN = "(";
+		symbol.LPAREN = "(";
 		start++;
 	}
 	else if (intermediateString.match(/^\)/)) {
-		symbol.LPAREN = ")";
+		symbol.RPAREN = ")";
 		start++;
 	}
 	else if (intermediateString.match(/^\[/)) {
-		symbol.RBRAK = '[';
+		symbol.LBRAK = '[';
 		start++;
 	}
 	else if (intermediateString.match(/^\]/)) {
-		symbol.LBRAK = ']';
+		symbol.RBRAK = ']';
 		start++;
 	}
 	else if (intermediateString.match(/^\{/)) {
-		symbol.RBRACE = '{';
+		symbol.LBRACE = '{';
 		start++;
 	}
 	else if (intermediateString.match(/^\}/)) {
-		symbol.LBRACE = '}';
+		symbol.RBRACE = '}';
 		start++;
 	}
 	else if (intermediateString.match(/^\|/)) {
