@@ -14,12 +14,9 @@ var parse = function (scannedInput) {
 	var outputParser = '';	
 	var sym;
 	var peek;
-	var ast = {};
-	var currentAstRef = ast;
 	var nextSym = (function () {
 		var i = 0;
 		return function () {
-			console.log(i);
 			if (i >= scannedInput.length) {
 				peek = false;
 				return false;
@@ -40,35 +37,53 @@ var parse = function (scannedInput) {
 		nextSym();
 		killWhite();
 	};
+
+	var Node = function (type, symbol) {
+		this.type = type;
+		this.sym = symbol;
+		this.right;
+		this.left;
+	};
 	
 	var createParser = function () {
 		getSym();
-		getSym(); // call getSym twice to initalize the sym pointer to something other than undefined
-		syntax();
-		process.stdout.write(JSON.stringify(outputParser));
+		getSym(); // call getSym twice to initialize the sym pointer to something other than undefined
+		var ast = syntax();
+		var util = require('util');
+		process.stdout.write(JSON.stringify(ast));
 	};
 
 
 	var syntax = function () {
-		while (production()) {
+		var ast = new Node("SYNTAX");
+		var topAst = ast;
+		ast.right = new Node();
+		while (production(ast.right)) {
+			ast.left = new Node("SYNTAX");
+			ast = ast.left;
+			ast.right = new Node();
 			getSym();
 		}
+		return topAst;
 	};
 	
-	var production = function () {
+	var production = function (ast) {
 		if (!sym) {
 			return false;
 		}
+		ast.type = "PRODUCTION";
 		if (!sym.IDENT) {
 			throw new Error(" PARSE: expected IDENT");
 		}
+		ast.left = new Node("IDENT", sym);
 		getSym();
 		if (!sym.EQ) {
 			console.log(sym);
 			throw new Error(" PARSE: expeted EQ");
 		}
 		getSym();
-		expression();
+		ast.right = new Node();
+		expression(ast.right);
 		getSym();
 		if (!sym.DOT) {
 			console.log(sym);
@@ -78,57 +93,74 @@ var parse = function (scannedInput) {
 		return true;
 	};
 
-	var expression = function () {
-		term();
+	var expression = function (ast) {
+		ast.type = "EXPRESSION";
+		ast.left = new Node();
+		term(ast.left);
 		var repeat = function () {
 			if (peek.DISJ) {
 				getSym();
 				getSym();
-				term();
+				ast.right = new Node("OPTION");
+				ast = ast.right;
+				ast.left = new Node();
+				term(ast.left);
 				repeat();
 			}
 		};
 		repeat();
 	};
 	
-	var term = function () {
-		factor();
+	var term = function (ast) {
+		ast.type = "TERM";
+		ast.left = new Node();
+		factor(ast.left);
 		var repeat = function () {
 			if (peek.IDENT || peek.STRING || peek.LPAREN || peek.LBRAK || peek.LBRACE) {
+				ast.right = new Node();
+				ast = ast.right;
+				ast.left = new Node();
 				getSym();
-				factor();
+				factor(ast.left);
 				repeat();
 			}
 		};
 		repeat();
 	};
 	
-	var factor = function () {
+	var factor = function (ast) {
+		ast.type = "FACTOR";
 		if (sym.IDENT) {
+			ast.val = sym;
 		}
 		else if (sym.STRING) {
+			ast.val = sym;
 		}
 		else if (sym.LPAREN) {
 			getSym();
-			expression();
+			ast.left = new Node();
+			expression(ast.left);
 			getSym();
 			if (!sym.RPAREN) {
 				throw new Error("unbalanced parens");
 			}
 		}
 		else if (sym.LBRAK) {
+			ast.val = "OPTION";
+			ast.left = new Node();
 			getSym();
-			expression();
+			expression(ast.left);
 			if (!sym.RBRAK) {
 				throw new Error("unbalanced brackets");
 			}
 		}
 		else if (sym.LBRACE) {
+			ast.val = "REPEAT";
+			ast.left = new Node();
 			getSym();
-			expression();
+			expression(ast.left);
 			getSym();
 			if (!sym.RBRACE) {
-				console.log(ast);
 				console.log(sym);
 				throw new Error("unbalanced braces");
 			}
