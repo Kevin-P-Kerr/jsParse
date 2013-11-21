@@ -57,11 +57,11 @@ var parse = function (scannedInput) {
 	var syntax = function () {
 		var ast = new Node("SYNTAX");
 		var topAst = ast;
-		ast.right = new Node();
-		while (production(ast.right)) {
-			ast.left = new Node("SYNTAX");
-			ast = ast.left;
-			ast.right = new Node();
+		ast.left = new Node();
+		while (production(ast.left)) {
+			ast.right = new Node("SYNTAX");
+			ast = ast.right;
+			ast.left = new Node();
 			getSym();
 		}
 		return topAst;
@@ -75,7 +75,7 @@ var parse = function (scannedInput) {
 		if (!sym.IDENT) {
 			throw new Error(" PARSE: expected IDENT");
 		}
-		ast.left = new Node("IDENT", sym);
+		ast.left = new Node("IDENT", sym.IDENT);
 		getSym();
 		if (!sym.EQ) {
 			console.log(sym);
@@ -117,10 +117,10 @@ var parse = function (scannedInput) {
 		factor(ast.left);
 		var repeat = function () {
 			if (peek.IDENT || peek.STRING || peek.LPAREN || peek.LBRAK || peek.LBRACE) {
+				getSym();
 				ast.right = new Node();
 				ast = ast.right;
 				ast.left = new Node();
-				getSym();
 				factor(ast.left);
 				repeat();
 			}
@@ -131,10 +131,10 @@ var parse = function (scannedInput) {
 	var factor = function (ast) {
 		ast.type = "FACTOR";
 		if (sym.IDENT) {
-			ast.val = sym;
+			ast.val = sym.IDENT;
 		}
 		else if (sym.STRING) {
-			ast.val = sym;
+			ast.val = sym.STRING;
 		}
 		else if (sym.LPAREN) {
 			getSym();
